@@ -19,6 +19,7 @@ This repository contains the code for [https://elliott.diy](https://elliott.diy)
 
 ## Development
 
+A lot of the content on here is hard coded in the homepage and about page for now so you would have to modify that if you wanted to use it for your own blog. To add new projects or posts, just create a new .mdx file in the appropriate folder under `src/content/` and it will automatically be included in the site. 
 ```bash
 npm install
 npm run dev
