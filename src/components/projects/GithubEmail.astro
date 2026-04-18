@@ -1,0 +1,89 @@
+<div class="max-w-md mx-auto p-6 space-y-4 rounded-lg border border-gray-200 bg-gray-50 text-gray-800
+     dark:bg-[#2f2f2f] dark:border-[#444444] dark:text-gray-100 shadow-md dark:shadow-lg">
+
+    <form id="github-email-form" class="space-y-4" autocomplete="off">
+        <label class="block text-sm font-semibold">
+            GitHub Username:
+            <input
+                type="text"
+                name="name"
+                id="github-username"
+                class="mt-1 w-full p-2 rounded-md border border-gray-300 bg-white text-gray-900
+               dark:bg-[#1e1e1e] dark:border-[#555] dark:text-gray-100 focus:outline-none focus:ring-2
+               focus:ring-blue-500 dark:focus:ring-blue-400 transition"
+                placeholder="octocat"
+                required
+            />
+        </label>
+
+        <button
+            type="submit"
+            id="github-email-submit"
+            class="w-full px-4 py-2 rounded-md bg-[#6a5bcd] text-white font-semibold
+    hover:bg-[#7f73d4] transition dark:bg-[#6a5bcd] dark:hover:bg-[#7f73d4]"
+        >
+            Find Email
+        </button>
+    </form>
+
+    <div id="github-email-error" class="text-red-600 text-sm hidden"></div>
+
+    <div id="github-email-result" class="hidden">
+        <div class="mt-2 p-3 rounded-md bg-white border border-gray-300 text-sm text-gray-800
+                dark:bg-[#1e1e1e] dark:border-[#555] dark:text-gray-100 space-y-1" id="github-email-output">
+        </div>
+    </div>
+</div>
+
+<!-- Script -->
+<script is:inline type="module">
+    const form = document.getElementById('github-email-form');
+    const input = document.getElementById('github-username');
+    const submit = document.getElementById('github-email-submit');
+    const errorDiv = document.getElementById('github-email-error');
+    const resultDiv = document.getElementById('github-email-result');
+    const resultOutput = document.getElementById('github-email-output');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorDiv.classList.add('hidden');
+        resultDiv.classList.add('hidden');
+        resultOutput.innerHTML = '';
+        submit.disabled = true;
+        submit.textContent = 'Searching...';
+
+        const name = input.value.trim();
+        if (!name) {
+            errorDiv.textContent = 'Please enter a username.';
+            errorDiv.classList.remove('hidden');
+            submit.disabled = false;
+            submit.textContent = 'Find Email';
+            return;
+        }
+
+        try {
+            const res = await fetch(`https://api.elliott.diy/v1/github/emails?name=${encodeURIComponent(name)}`);
+            if (!res.ok) throw new Error('API error');
+            const data = await res.json();
+
+            if (data.emails && Array.isArray(data.emails) && data.emails.length > 0) {
+                resultOutput.innerHTML = `
+          <p class="font-medium">Emails found:</p>
+          <ul class="list-disc list-inside space-y-1">
+            ${data.emails.map(email => `<li>${email}</li>`).join('')}
+          </ul>
+        `;
+            } else {
+                resultOutput.innerHTML = `<p>No email addresses found.</p>`;
+            }
+
+            resultDiv.classList.remove('hidden');
+        } catch {
+            errorDiv.textContent = 'Failed to fetch email. Please try again later.';
+            errorDiv.classList.remove('hidden');
+        } finally {
+            submit.disabled = false;
+            submit.textContent = 'Find Email';
+        }
+    });
+</script>

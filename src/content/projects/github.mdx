@@ -1,0 +1,27 @@
+---
+title: 'GitHub Email Finder'
+description: 'Find public email addresses from GitHub usernames. Useful for OSINT, cybersecurity investigations, and attribution work.'
+pubDate: 'May 28 2025'
+tags: ['github', 'osint', 'tool']
+---
+
+This is the hosted version of [EmailFinder](https://github.com/elliott-diy/EmailFinder) - a lightweight OSINT tool that finds public email addresses tied to GitHub usernames.
+
+Developers often expose real email addresses through commits, especially early on.
+
+It checks a user’s profile and a limited number of recent public repositories. If an email has been exposed, it’ll show up here.
+
+Enter a GitHub username below. If there’s a public email, you’ll see it.
+
+import GithubEmail from '../../components/projects/GithubEmail.astro'
+
+<GithubEmail/>
+
+## Limitations
+
+This version only scans a few repos per user. It’s meant for quick lookups, not full recon.
+
+For deeper results or automation, use the CLI version:
+[github.com/elliott-diy/EmailFinder](https://github.com/elliott-diy/EmailFinder)
+
+The CLI supports using your own token, full repo traversal, and bulk search.

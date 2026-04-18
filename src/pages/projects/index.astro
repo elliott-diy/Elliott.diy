@@ -1,0 +1,68 @@
+---
+import BaseHead from "../../components/BaseHead.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import { SITE_TITLE } from "../../consts";
+import { getCollection, type CollectionEntry } from "astro:content";
+
+type Post = CollectionEntry<'projects'>;
+
+const posts = (await getCollection("projects")).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+const postByYear: { [year: number]: Post[] } = {};
+
+posts.forEach((post) => {
+  const year = post.data.pubDate.getFullYear();
+  if (!postByYear[year]) {
+    postByYear[year] = [];
+  }
+  postByYear[year].push(post);
+});
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={SITE_TITLE} description="A collection of tools, experiments, and side projects I've worked on as a cybersecurity student. Some were built for fun, some for CTFs, and a few turned out to be surprisingly useful." />
+  </head>
+  <body class="w-full mx-auto my-4 max-w-screen-md dark:bg-neutral-800 dark:text-neutral-300 transition-colors duration-300">
+    <Header />
+
+    <section class="px-4 pt-8 pb-6 max-w-screen-md mx-auto">
+      <h1 class="text-3xl font-bold mb-3">Projects</h1>
+      <p class="text-base leading-relaxed text-neutral-600 dark:text-neutral-400">
+        A collection of tools, experiments, and side projects I've built as a cybersecurity student. Some were for CTFs, some were random ideas that felt worth trying, and a few turned out to be surprisingly useful. For everything else I've worked on, check out my <a href="https://github.com/elliott-diy" class="text-blue-500 hover:underline">GitHub</a>.
+      </p>
+    </section>
+
+    <main class="w-full max-w-screen-md mx-auto my-4 px-4 flex flex-col gap-4 justify-center">
+      {
+        Object.keys(postByYear)
+          .sort((a, b) => parseInt(b) - parseInt(a))
+          .map((year) => (
+            <div class="flex flex-col">
+              <div class="flex flex-col gap-4">
+                {
+                  postByYear[parseInt(year)].map((post) => (
+                    <div class="flex gap-2 justify-between border-b pb-4">
+                      <div class="flex flex-col gap-4">
+                        <a class="font-bold text-lg" href={`/projects/${post.id}`}>
+                          {post.data.title}
+                        </a>
+                        <p class="text-gray-500 dark:text-neutral-400 text-base font-medium tracking-wide">
+                          {post.data.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                }
+              </div>
+            </div>
+          ))
+      }
+    </main>
+    <Footer />
+  </body>
+</html>

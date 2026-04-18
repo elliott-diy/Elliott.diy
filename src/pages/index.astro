@@ -1,0 +1,30 @@
+---
+import BaseHead from "../components/BaseHead.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
+import RecentPublications from "../components/RecentPublications.astro";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body class="w-full max-w-screen-md mx-auto my-4 dark:bg-neutral-800 dark:text-neutral-300 transition-colors duration-300">
+    <Header />
+    <main class="flex flex-col justify-center">
+      <div class="px-4 md:px-16 flex flex-col gap-4 md:my-10">
+        <h1 class="text-2xl md:text-5xl w-full">&#128075; Hey, I'm Elliott</h1>
+        <p class="w-full text-justify text-base md:text-lg">
+          I'm a cybersecurity student, builder, and reverse-engineering enthusiast. I like taking apart malware, designing CTFs, and experimenting with weird internet infrastructure.
+        </p>
+        <p class="w-full text-justify text-base md:text-lg">
+          This site is a place to share projects, ideas, and things I find interesting. Some of it's useful. Some of it's just for fun.
+        </p>
+      </div>
+      <RecentPublications />
+    </main>
+    <Footer />
+  </body>
+</html>

@@ -1,0 +1,46 @@
+---
+import { getCollection } from "astro:content";
+import BaseHead from "../../components/BaseHead.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import { SITE_DESCRIPTION, SITE_TITLE } from "../../consts";
+
+const posts = (await getCollection("blog")).sort(
+  (a, b) => a.data.pubDate.valueOf() - b.data.pubDate.valueOf()
+);
+const tagCounts = new Map<string, number>();
+posts.forEach((post) => {
+  (post.data.tags ?? []).forEach((tag) => {
+    tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+  });
+});
+const tags = [...tagCounts.entries()].sort(
+  (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+);
+---
+
+<!doctype html>
+<html lang="en" class="min-h-dvh">
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body class="w-full flex flex-col mx-auto max-w-screen-md min-h-dvh justify-between dark:bg-neutral-800 dark:text-neutral-300 transition-colors duration-300">
+    <Header />
+    <main
+      class="w-full max-w-screen-md mx-auto my-4 flex flex-col gap-4 justify-center px-4"
+    >
+
+        <ul class="flex flex-wrap gap-2">
+            {tags.map(([tag, count]) => (
+                <li>
+                    <a href={`/tags/${encodeURIComponent(tag)}`} class="p-1 rounded-md">
+                        #{tag} ({count})
+                    </a>
+                </li>
+            ))}
+        </ul>
+     
+    </main>
+    <Footer />
+  </body>
+</html>
