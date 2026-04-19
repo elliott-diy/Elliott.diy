@@ -5,14 +5,11 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import FormattedDate from "../components/FormattedDate.astro";
 import TagLink from "../components/TagLink.astro";
+import { Icon } from "astro-iconify";
 
 type BlogPostData = CollectionEntry<"blog">["data"];
-type BlogPostEntry = CollectionEntry<"blog">;
 type Props = BlogPostData & {
   readTimeText: string;
-  olderPost?: BlogPostEntry;
-  newerPost?: BlogPostEntry;
-  relatedPosts?: BlogPostEntry[];
 };
 
 const {
@@ -24,9 +21,6 @@ const {
   heroImageAlt,
   tags,
   readTimeText,
-  olderPost,
-  newerPost,
-  relatedPosts = [],
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
@@ -48,6 +42,8 @@ const updatedDateText = updatedDate?.toLocaleDateString("en-us", {
   month: "short",
   day: "numeric",
 });
+const xShareURL = `https://x.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(canonicalURL)}`;
+const hackerNewsShareURL = `https://news.ycombinator.com/submitlink?u=${encodeURIComponent(canonicalURL)}&t=${encodeURIComponent(title)}`;
 
 ---
 
@@ -116,47 +112,31 @@ const updatedDateText = updatedDate?.toLocaleDateString("en-us", {
             )
           }
         </div>
-        {
-          (newerPost || olderPost) && (
-            <nav class="mt-10 pt-8 border-t border-neutral-200 dark:border-neutral-700">
-              <h2 class="text-xl font-bold mb-4">Continue reading</h2>
-              <div class="grid gap-3 sm:grid-cols-2">
-                {
-                  newerPost && (
-                    <a class="border rounded-lg p-4 hover:no-underline hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-700/30 transition-colors" href={`/blog/${newerPost.id}`}>
-                      <p class="text-xs mb-2 text-neutral-500 dark:text-neutral-400">Newer post</p>
-                      <p class="font-semibold">{newerPost.data.title}</p>
-                    </a>
-                  )
-                }
-                {
-                  olderPost && (
-                    <a class="border rounded-lg p-4 hover:no-underline hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-700/30 transition-colors" href={`/blog/${olderPost.id}`}>
-                      <p class="text-xs mb-2 text-neutral-500 dark:text-neutral-400">Older post</p>
-                      <p class="font-semibold">{olderPost.data.title}</p>
-                    </a>
-                  )
-                }
-              </div>
-            </nav>
-          )
-        }
-        {
-          relatedPosts.length > 0 && (
-            <section class="mt-10 pt-8 border-t border-neutral-200 dark:border-neutral-700">
-              <h2 class="text-xl font-bold mb-4">Related posts</h2>
-              <ul class="grid gap-3 sm:grid-cols-3">
-                {relatedPosts.map((relatedPost) => (
-                  <li>
-                    <a class="block border rounded-lg p-4 hover:no-underline hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-700/30 transition-colors h-full" href={`/blog/${relatedPost.id}`}>
-                      <p class="font-semibold">{relatedPost.data.title}</p>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )
-        }
+        <section class="mt-6 pt-4 border-t border-neutral-200/70 dark:border-neutral-700/70">
+          <p class="mb-2 text-xs font-normal text-gray-500 dark:text-neutral-400">
+            Share
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <a
+              href={hackerNewsShareURL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1.5 rounded-md border border-neutral-300/80 px-2.5 py-1.5 text-xs font-normal text-neutral-600 transition-colors hover:bg-neutral-100/70 dark:border-neutral-600/80 dark:text-neutral-300 dark:hover:bg-neutral-700/30 hover:no-underline"
+            >
+              <Icon name="fa6-brands:hacker-news" class="h-3.5 w-3.5" />
+              Hacker News
+            </a>
+            <a
+              href={xShareURL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1.5 rounded-md border border-neutral-300/80 px-2.5 py-1.5 text-xs font-normal text-neutral-600 transition-colors hover:bg-neutral-100/70 dark:border-neutral-600/80 dark:text-neutral-300 dark:hover:bg-neutral-700/30 hover:no-underline"
+            >
+              <Icon name="fa6-brands:x-twitter" class="h-3.5 w-3.5" />
+              X
+            </a>
+          </div>
+        </section>
       </article>
     </main>
     <script src="https://giscus.app/client.js" is:inline

@@ -1,4 +1,4 @@
----
+    ---
 import { getCollection, render } from 'astro:content';
 import readingTime from 'reading-time';
 import BlogPost from '../../layouts/BlogPost.astro';
@@ -13,37 +13,12 @@ export async function getStaticPaths() {
 
 const post = Astro.props;
 const { Content } = await render(post);
-const allPosts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-);
-const postIndex = allPosts.findIndex((item) => item.id === post.id);
-const newerPost = postIndex > 0 ? allPosts[postIndex - 1] : undefined;
-const olderPost = postIndex >= 0 && postIndex < allPosts.length - 1 ? allPosts[postIndex + 1] : undefined;
-const currentTags = new Set(post.data.tags ?? []);
-const scoredPosts = allPosts
-	.filter((item) => item.id !== post.id)
-	.map((item) => ({
-		post: item,
-		score: (item.data.tags ?? []).filter((tag) => currentTags.has(tag)).length,
-	}))
-	.sort(
-		(a, b) =>
-			b.score - a.score ||
-			b.post.data.pubDate.valueOf() - a.post.data.pubDate.valueOf()
-	);
-const relatedPosts = scoredPosts
-	.filter((item) => item.score > 0)
-	.slice(0, 3)
-	.map((item) => item.post);
 const readTimeText = `${Math.max(1, Math.round(readingTime(post.body ?? '').minutes))} min read`;
 ---
 
 <BlogPost
 	{...post.data}
 	readTimeText={readTimeText}
-	olderPost={olderPost}
-	newerPost={newerPost}
-	relatedPosts={relatedPosts}
 >
 	<div class="content">
 		<Content />
