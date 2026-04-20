@@ -1,4 +1,7 @@
 const ALLOWED_HOST = "api.elliott.diy";
+const MAX_URL_LENGTH = 400;
+const MAX_FILENAME_LENGTH = 120;
+const UPSTREAM_TIMEOUT_MS = 8000;
 const ALLOWED_PATHS = new Set([
   "/v1/vpn/all",
   "/v1/vpn/pia",
@@ -19,7 +22,7 @@ const sanitizeFilename = (value) => {
     return "";
   }
 
-  return value.replace(/[^a-zA-Z0-9._-]/g, "").slice(0, 120);
+  return value.replace(/[^a-zA-Z0-9._-]/g, "").slice(0, MAX_FILENAME_LENGTH);
 };
 
 const normalizeFilename = (value, extension) => {
@@ -39,11 +42,20 @@ const isAllowedQuery = (url) => {
 
 export async function onRequestGet(context) {
   const requestUrl = new URL(context.request.url);
+  const queryKeys = [...requestUrl.searchParams.keys()];
   const rawFeedUrl = requestUrl.searchParams.get("url");
   const requestedFilename = requestUrl.searchParams.get("filename");
 
+  if (queryKeys.some((key) => key !== "url" && key !== "filename")) {
+    return new Response("Unsupported query parameters.", { status: 400 });
+  }
+
   if (!rawFeedUrl) {
     return new Response("Missing feed url.", { status: 400 });
+  }
+
+  if (rawFeedUrl.length > MAX_URL_LENGTH) {
+    return new Response("Feed url is too long.", { status: 400 });
   }
 
   let feedUrl;
@@ -55,6 +67,8 @@ export async function onRequestGet(context) {
 
   if (
     feedUrl.protocol !== "https:" ||
+    !!feedUrl.username ||
+    !!feedUrl.password ||
     feedUrl.hostname !== ALLOWED_HOST ||
     !ALLOWED_PATHS.has(feedUrl.pathname) ||
     !isAllowedQuery(feedUrl)
@@ -65,11 +79,22 @@ export async function onRequestGet(context) {
   const extension = feedUrl.searchParams.get("format") === "json" ? "json" : "txt";
   const filename = normalizeFilename(requestedFilename, extension);
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
   let upstreamResponse;
   try {
-    upstreamResponse = await fetch(feedUrl.toString(), { method: "GET" });
-  } catch {
+    upstreamResponse = await fetch(feedUrl.toString(), {
+      method: "GET",
+      redirect: "error",
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return new Response("Feed request timed out.", { status: 504 });
+    }
     return new Response("Failed to fetch feed.", { status: 502 });
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   if (!upstreamResponse.ok) {
@@ -85,6 +110,8 @@ export async function onRequestGet(context) {
   headers.set("Content-Disposition", `attachment; filename="${filename}"`);
   headers.set("Cache-Control", "no-store");
   headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("Referrer-Policy", "no-referrer");
+  headers.set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'");
 
   return new Response(upstreamResponse.body, {
     status: 200,
