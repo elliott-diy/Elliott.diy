@@ -1,0 +1,391 @@
+---
+const vpnFeeds = [
+  { label: "Aggregated VPNs", url: "https://api.elliott.diy/v1/vpn/all", filename: "all-vpn" },
+  { label: "PIA", url: "https://api.elliott.diy/v1/vpn/pia", filename: "pia" },
+  { label: "Mullvad", url: "https://api.elliott.diy/v1/vpn/mullvad", filename: "mullvad" },
+  { label: "Windscribe", url: "https://api.elliott.diy/v1/vpn/windscribe", filename: "windscribe" },
+  { label: "IVPN", url: "https://api.elliott.diy/v1/vpn/ivpn", filename: "ivpn" },
+  { label: "NordVPN", url: "https://api.elliott.diy/v1/vpn/nordvpn", filename: "nordvpn" },
+];
+
+const torFeeds = [
+  { label: "Tor Exit Nodes", url: "https://api.elliott.diy/v1/tor/exit", filename: "tor-exit", bridge: false },
+  { label: "Tor Bridges: obfs4", url: "https://api.elliott.diy/v1/tor/obfs4", filename: "tor-bridge-obfs4", bridge: true },
+  { label: "Tor Bridges: vanilla", url: "https://api.elliott.diy/v1/tor/vanilla", filename: "tor-bridge-vanilla", bridge: true },
+  { label: "Tor Bridges: webtunnel", url: "https://api.elliott.diy/v1/tor/webtunnel", filename: "tor-bridge-webtunnel", bridge: true },
+  { label: "Tor Bridges: snowflake", url: "https://api.elliott.diy/v1/tor/snowflake", filename: "tor-bridge-snowflake", bridge: true },
+  { label: "Tor Bridges: meek", url: "https://api.elliott.diy/v1/tor/meek", filename: "tor-bridge-meek", bridge: true },
+];
+---
+
+<div class="feeds-wrap">
+  <section class="feeds-card">
+    <section class="feed-block">
+      <h3>VPN</h3>
+      <div class="feed-grid">
+        <label class="feed-field" for="vpn-feed-select">
+          <select id="vpn-feed-select" aria-label="Select a VPN feed" class="feed-select">
+            {
+              vpnFeeds.map((feed, index) => (
+                <option value={feed.url} data-filename={feed.filename} selected={index === 0}>
+                  {feed.label}
+                </option>
+              ))
+            }
+          </select>
+        </label>
+
+        <div class="feed-field feed-format-field">
+          <span class="feed-label">Format</span>
+          <div class="format-toggle">
+            <button type="button" id="vpn-format-txt" data-format="txt" class="format-btn is-active">TXT</button>
+            <button type="button" id="vpn-format-json" data-format="json" class="format-btn">JSON</button>
+          </div>
+          <input type="hidden" id="vpn-format-value" value="txt" />
+        </div>
+
+        <button type="button" id="vpn-download" class="feed-download-btn">Download</button>
+      </div>
+    </section>
+
+    <div class="feed-divider"></div>
+
+    <section class="feed-block">
+      <h3>Tor</h3>
+      <div class="feed-grid">
+        <label class="feed-field" for="tor-feed-select">
+          <select id="tor-feed-select" aria-label="Select a Tor feed" class="feed-select">
+            {
+              torFeeds.map((feed, index) => (
+                <option value={feed.url} data-filename={feed.filename} data-bridge={feed.bridge ? "true" : "false"} selected={index === 0}>
+                  {feed.label}
+                </option>
+              ))
+            }
+          </select>
+        </label>
+
+        <div class="feed-field feed-format-field">
+          <span class="feed-label">Format</span>
+          <div class="format-toggle">
+            <button type="button" id="tor-format-txt" data-format="txt" class="format-btn is-active">TXT</button>
+            <button type="button" id="tor-format-json" data-format="json" class="format-btn">JSON</button>
+          </div>
+          <input type="hidden" id="tor-format-value" value="txt" />
+        </div>
+
+        <button type="button" id="tor-download" class="feed-download-btn">Download</button>
+      </div>
+
+      <p id="bridge-note" class="bridge-note hidden">
+        Access to bridge data is restricted. See
+        <a href="https://docs.elliott.diy/tor-recon/tor-bridges" target="_blank" rel="noopener noreferrer">docs</a>
+        for details.
+      </p>
+    </section>
+  </section>
+</div>
+
+<style is:inline>
+  .feeds-wrap {
+    max-width: 52rem;
+    margin: 0 auto;
+    margin-bottom: 1.25rem;
+  }
+
+  .feeds-card {
+    border: 1px solid rgb(229 229 229);
+    border-radius: 0.7rem;
+    background: rgb(250 250 250);
+    padding: 0.95rem;
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .feed-block {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .feed-block h3 {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .feed-grid {
+    display: grid;
+    grid-template-columns: minmax(14rem, 1fr) auto auto;
+    gap: 0.55rem;
+    align-items: end;
+  }
+
+  .feed-field {
+    display: grid;
+    gap: 0.24rem;
+  }
+
+  .feed-label {
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.045em;
+    color: rgb(82 82 82);
+    text-transform: uppercase;
+  }
+
+  .feed-select {
+    width: 100%;
+    border: 1px solid rgb(212 212 212);
+    border-radius: 0.5rem;
+    background: white;
+    color: rgb(23 23 23);
+    padding: 0.49rem 0.68rem;
+    font-size: 0.86rem;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+
+  .feed-select:focus-visible {
+    outline: none;
+    border-color: #6a5bcd;
+    box-shadow: 0 0 0 2px rgba(106, 91, 205, 0.2);
+  }
+
+  .format-toggle {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid rgb(212 212 212);
+    border-radius: 0.5rem;
+    padding: 0.125rem;
+    background: white;
+  }
+
+  .format-btn {
+    min-width: 3rem;
+    border: 0;
+    border-radius: 0.35rem;
+    padding: 0.38rem 0.65rem;
+    line-height: 1;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: rgb(64 64 64);
+    background-color: transparent;
+    transition: none;
+    cursor: pointer;
+  }
+
+  .format-btn:not(.is-active):hover {
+    background-color: rgb(235 235 235);
+  }
+
+  .format-btn.is-active {
+    background-color: #6a5bcd;
+    color: white;
+  }
+
+  .format-btn:focus-visible {
+    outline: 2px solid rgba(106, 91, 205, 0.45);
+    outline-offset: 1px;
+  }
+
+  .feed-download-btn {
+    border: 0;
+    border-radius: 0.5rem;
+    background-color: #6a5bcd;
+    color: white;
+    padding: 0.52rem 0.92rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    min-width: 7.4rem;
+    transition: background-color 120ms ease, opacity 120ms ease;
+    cursor: pointer;
+  }
+
+  .feed-download-btn:hover {
+    background-color: #7f73d4;
+  }
+
+  .feed-download-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
+  }
+
+  .feed-divider {
+    height: 1px;
+    background: rgb(225 225 225);
+  }
+
+  .bridge-note {
+    margin: 0.1rem 0 0;
+    font-size: 0.82rem;
+    color: rgb(82 82 82);
+  }
+
+  .bridge-note a {
+    color: #3b82f6;
+    text-decoration: underline;
+  }
+
+  html.dark .feeds-card {
+    border-color: #444444;
+    background: #2f2f2f;
+  }
+
+  html.dark .feed-label,
+  html.dark .bridge-note {
+    color: rgb(193 193 193);
+  }
+
+  html.dark .feed-select {
+    border-color: #555;
+    background: #1e1e1e;
+    color: rgb(243 244 246);
+  }
+
+  html.dark .feed-divider {
+    background: #444444;
+  }
+
+  html.dark .format-toggle {
+    border-color: #555;
+    background: #1e1e1e;
+  }
+
+  html.dark .format-btn {
+    color: rgb(212 212 212);
+  }
+
+  html.dark .format-btn:not(.is-active):hover {
+    background-color: #3d3d3d;
+  }
+
+  @media (max-width: 780px) {
+    .feed-grid {
+      grid-template-columns: 1fr;
+      gap: 0.6rem;
+    }
+
+    .feed-format-field {
+      justify-items: start;
+    }
+
+    .feed-download-btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<script is:inline>
+  const vpnSelect = document.getElementById("vpn-feed-select");
+  const vpnFormatValue = document.getElementById("vpn-format-value");
+  const vpnFormatTxt = document.getElementById("vpn-format-txt");
+  const vpnFormatJson = document.getElementById("vpn-format-json");
+  const vpnDownload = document.getElementById("vpn-download");
+  const torSelect = document.getElementById("tor-feed-select");
+  const torFormatValue = document.getElementById("tor-format-value");
+  const torFormatTxt = document.getElementById("tor-format-txt");
+  const torFormatJson = document.getElementById("tor-format-json");
+  const torDownload = document.getElementById("tor-download");
+  const bridgeNote = document.getElementById("bridge-note");
+
+  const getDownloadUrl = (baseUrl, format) => (format === "json" ? `${baseUrl}?format=json` : baseUrl);
+
+  const downloadFeed = async (feedSelect, formatSelect, button) => {
+    const selectedOption = feedSelect?.selectedOptions?.[0];
+    const baseUrl = feedSelect?.value ?? "";
+    const format = formatSelect?.value === "json" ? "json" : "txt";
+    const filenameBase = selectedOption?.dataset?.filename ?? "feed";
+    const finalUrl = getDownloadUrl(baseUrl, format);
+
+    if (!finalUrl || !button) {
+      return;
+    }
+
+    const response = await fetch(finalUrl);
+    if (!response.ok) {
+      throw new Error("Download failed");
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = `${filenameBase}.${format}`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(objectUrl);
+  };
+
+  const setupFormatToggle = (txtButton, jsonButton, hiddenInput) => {
+    const setActive = (format) => {
+      if (!hiddenInput || !txtButton || !jsonButton) {
+        return;
+      }
+
+      hiddenInput.value = format;
+      txtButton.classList.toggle("is-active", format === "txt");
+      jsonButton.classList.toggle("is-active", format === "json");
+    };
+
+    const setTxt = () => setActive("txt");
+    const setJson = () => setActive("json");
+
+    txtButton?.addEventListener("pointerdown", setTxt);
+    jsonButton?.addEventListener("pointerdown", setJson);
+    txtButton?.addEventListener("mousedown", setTxt);
+    jsonButton?.addEventListener("mousedown", setJson);
+    txtButton?.addEventListener("click", setTxt);
+    jsonButton?.addEventListener("click", setJson);
+
+    const initial = hiddenInput?.value === "json" ? "json" : "txt";
+    setActive(initial);
+  };
+
+  const setLoadingState = (button, loading) => {
+    if (!button) {
+      return;
+    }
+
+    if (loading) {
+      button.textContent = "Downloading...";
+      button.setAttribute("disabled", "true");
+    } else {
+      button.textContent = "Download";
+      button.removeAttribute("disabled");
+    }
+  };
+
+  const updateTorBridgeNote = () => {
+    const selectedOption = torSelect?.selectedOptions?.[0];
+    const isBridge = selectedOption?.dataset?.bridge === "true";
+    if (bridgeNote) {
+      bridgeNote.classList.toggle("hidden", !isBridge);
+    }
+  };
+
+  torSelect?.addEventListener("change", updateTorBridgeNote);
+  vpnDownload?.addEventListener("click", async () => {
+    setLoadingState(vpnDownload, true);
+    try {
+      await downloadFeed(vpnSelect, vpnFormatValue, vpnDownload);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingState(vpnDownload, false);
+    }
+  });
+  torDownload?.addEventListener("click", async () => {
+    setLoadingState(torDownload, true);
+    try {
+      await downloadFeed(torSelect, torFormatValue, torDownload);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingState(torDownload, false);
+    }
+  });
+
+  setupFormatToggle(vpnFormatTxt, vpnFormatJson, vpnFormatValue);
+  setupFormatToggle(torFormatTxt, torFormatJson, torFormatValue);
+  updateTorBridgeNote();
+</script>
