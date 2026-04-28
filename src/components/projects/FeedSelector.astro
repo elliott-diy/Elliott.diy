@@ -296,7 +296,84 @@ const torFeeds = [
     return `/api/feed-download?${params.toString()}`;
   };
 
-  const downloadFeed = (feedSelect, formatSelect) => {
+  const parseFilenameFromContentDisposition = (value, fallback) => {
+    if (!value) {
+      return fallback;
+    }
+
+    const utf8Match = value.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+    if (utf8Match?.[1]) {
+      try {
+        return decodeURIComponent(utf8Match[1].trim());
+      } catch {
+        return fallback;
+      }
+    }
+
+    const basicMatch = value.match(/filename\s*=\s*"?([^";]+)"?/i);
+    return basicMatch?.[1]?.trim() || fallback;
+  };
+
+  const triggerBlobDownload = (blob, filename) => {
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  };
+
+  const triggerDirectDownload = (proxyUrl, filename) => {
+    const link = document.createElement("a");
+    link.href = proxyUrl;
+    link.download = filename;
+    link.target = "_self";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  const withDisabledButton = async (button, action) => {
+    if (button) {
+      button.disabled = true;
+    }
+
+    try {
+      await action();
+    } finally {
+      if (button) {
+        button.disabled = false;
+      }
+    }
+  };
+
+  const fetchDownloadData = async (proxyUrl) => {
+    let response;
+    try {
+      response = await fetch(proxyUrl, {
+        method: "GET",
+        credentials: "same-origin",
+      });
+    } catch {
+      return null;
+    }
+
+    if (!response.ok) {
+      return null;
+    }
+
+    try {
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get("content-disposition");
+      return { blob, contentDisposition };
+    } catch {
+      return null;
+    }
+  };
+
+  const downloadFeed = async (feedSelect, formatSelect, downloadButton) => {
     const selectedOption = feedSelect?.selectedOptions?.[0];
     const baseUrl = feedSelect?.value ?? "";
     const format = formatSelect?.value === "json" ? "json" : "txt";
@@ -307,12 +384,20 @@ const torFeeds = [
       return;
     }
 
-    const proxyUrl = getProxyDownloadUrl(finalFeedUrl, `${filenameBase}.${format}`);
-    const link = document.createElement("a");
-    link.href = proxyUrl;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    const requestedFilename = `${filenameBase}.${format}`;
+    const proxyUrl = getProxyDownloadUrl(finalFeedUrl, requestedFilename);
+
+    await withDisabledButton(downloadButton, async () => {
+      const downloadData = await fetchDownloadData(proxyUrl);
+      if (!downloadData) {
+        triggerDirectDownload(proxyUrl, requestedFilename);
+        return;
+      }
+
+      const { blob, contentDisposition } = downloadData;
+      const resolvedFilename = parseFilenameFromContentDisposition(contentDisposition, requestedFilename);
+      triggerBlobDownload(blob, resolvedFilename);
+    });
   };
 
   const setupFormatToggle = (txtButton, jsonButton, hiddenInput) => {
@@ -350,10 +435,10 @@ const torFeeds = [
 
   torSelect?.addEventListener("change", updateTorBridgeNote);
   vpnDownload?.addEventListener("click", () => {
-    downloadFeed(vpnSelect, vpnFormatValue);
+    downloadFeed(vpnSelect, vpnFormatValue, vpnDownload);
   });
   torDownload?.addEventListener("click", () => {
-    downloadFeed(torSelect, torFormatValue);
+    downloadFeed(torSelect, torFormatValue, torDownload);
   });
 
   setupFormatToggle(vpnFormatTxt, vpnFormatJson, vpnFormatValue);
