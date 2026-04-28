@@ -325,14 +325,15 @@ const torFeeds = [
     setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   };
 
-  const triggerDirectDownload = (proxyUrl, filename) => {
-    const link = document.createElement("a");
-    link.href = proxyUrl;
-    link.download = filename;
-    link.target = "_self";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+  const triggerIframeDownload = (proxyUrl) => {
+    const frame = document.createElement("iframe");
+    frame.style.display = "none";
+    frame.setAttribute("aria-hidden", "true");
+    frame.src = proxyUrl;
+    document.body.appendChild(frame);
+    setTimeout(() => {
+      frame.remove();
+    }, 60000);
   };
 
   const withDisabledButton = async (button, action) => {
@@ -390,7 +391,7 @@ const torFeeds = [
     await withDisabledButton(downloadButton, async () => {
       const downloadData = await fetchDownloadData(proxyUrl);
       if (!downloadData) {
-        triggerDirectDownload(proxyUrl, requestedFilename);
+        triggerIframeDownload(proxyUrl);
         return;
       }
 
