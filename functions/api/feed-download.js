@@ -49,9 +49,13 @@ const safeSetHeader = (headers, name, value) => {
 };
 
 const buildDirectRedirect = (feedUrl) => {
-  const response = Response.redirect(feedUrl.toString(), 302);
-  response.headers.set("Cache-Control", "no-store");
-  return response;
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: feedUrl.toString(),
+      "Cache-Control": "no-store",
+    },
+  });
 };
 
 const isAllowedQuery = (url) => {
@@ -64,97 +68,101 @@ const isAllowedQuery = (url) => {
 };
 
 export async function onRequestGet(context) {
-  const requestUrl = new URL(context.request.url);
-  const queryKeys = [...requestUrl.searchParams.keys()];
-  const rawFeedUrl = requestUrl.searchParams.get("url");
-  const requestedFilename = requestUrl.searchParams.get("filename");
-
-  if (queryKeys.some((key) => key !== "url" && key !== "filename")) {
-    return new Response("Unsupported query parameters.", { status: 400 });
-  }
-
-  if (!rawFeedUrl) {
-    return new Response("Missing feed url.", { status: 400 });
-  }
-
-  if (rawFeedUrl.length > MAX_URL_LENGTH) {
-    return new Response("Feed url is too long.", { status: 400 });
-  }
-
-  let feedUrl;
   try {
-    feedUrl = new URL(rawFeedUrl);
-  } catch {
-    return new Response("Invalid feed url.", { status: 400 });
-  }
+    const requestUrl = new URL(context.request.url);
+    const queryKeys = [...requestUrl.searchParams.keys()];
+    const rawFeedUrl = requestUrl.searchParams.get("url");
+    const requestedFilename = requestUrl.searchParams.get("filename");
 
-  if (
-    feedUrl.protocol !== "https:" ||
-    !!feedUrl.username ||
-    !!feedUrl.password ||
-    feedUrl.hostname !== ALLOWED_HOST ||
-    !ALLOWED_PATHS.has(feedUrl.pathname) ||
-    !isAllowedQuery(feedUrl)
-  ) {
-    return new Response("Unsupported feed url.", { status: 400 });
-  }
-
-  const extension = feedUrl.searchParams.get("format") === "json" ? "json" : "txt";
-  const filename = normalizeFilename(requestedFilename, extension);
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
-  let upstreamResponse;
-  try {
-    upstreamResponse = await fetch(feedUrl.toString(), {
-      method: "GET",
-      redirect: "error",
-      headers: {
-        "accept-encoding": "identity",
-      },
-      signal: controller.signal,
-    });
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      return new Response("Feed request timed out.", { status: 504 });
+    if (queryKeys.some((key) => key !== "url" && key !== "filename")) {
+      return new Response("Unsupported query parameters.", { status: 400 });
     }
-    return buildDirectRedirect(feedUrl);
-  } finally {
-    clearTimeout(timeoutId);
-  }
 
-  if (!upstreamResponse.ok) {
-    if (upstreamResponse.status >= 500) {
+    if (!rawFeedUrl) {
+      return new Response("Missing feed url.", { status: 400 });
+    }
+
+    if (rawFeedUrl.length > MAX_URL_LENGTH) {
+      return new Response("Feed url is too long.", { status: 400 });
+    }
+
+    let feedUrl;
+    try {
+      feedUrl = new URL(rawFeedUrl);
+    } catch {
+      return new Response("Invalid feed url.", { status: 400 });
+    }
+
+    if (
+      feedUrl.protocol !== "https:" ||
+      !!feedUrl.username ||
+      !!feedUrl.password ||
+      feedUrl.hostname !== ALLOWED_HOST ||
+      !ALLOWED_PATHS.has(feedUrl.pathname) ||
+      !isAllowedQuery(feedUrl)
+    ) {
+      return new Response("Unsupported feed url.", { status: 400 });
+    }
+
+    const extension = feedUrl.searchParams.get("format") === "json" ? "json" : "txt";
+    const filename = normalizeFilename(requestedFilename, extension);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+    let upstreamResponse;
+    try {
+      upstreamResponse = await fetch(feedUrl.toString(), {
+        method: "GET",
+        redirect: "error",
+        headers: {
+          "accept-encoding": "identity",
+        },
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return new Response("Feed request timed out.", { status: 504 });
+      }
       return buildDirectRedirect(feedUrl);
+    } finally {
+      clearTimeout(timeoutId);
     }
 
-    return new Response("Feed is unavailable.", {
-      status: toSafeHttpStatus(upstreamResponse.status, 502),
+    if (!upstreamResponse.ok) {
+      if (upstreamResponse.status >= 500) {
+        return buildDirectRedirect(feedUrl);
+      }
+
+      return new Response("Feed is unavailable.", {
+        status: toSafeHttpStatus(upstreamResponse.status, 502),
+      });
+    }
+
+    let body;
+    try {
+      body = await upstreamResponse.arrayBuffer();
+    } catch {
+      return new Response("Failed to read feed.", { status: 502 });
+    }
+
+    const headers = new Headers();
+    const defaultContentType = extension === "json" ? "application/json; charset=utf-8" : "text/plain; charset=utf-8";
+    const upstreamContentType = upstreamResponse.headers.get("content-type");
+    const hasContentType = safeSetHeader(headers, "Content-Type", upstreamContentType);
+    if (!hasContentType) {
+      headers.set("Content-Type", defaultContentType);
+    }
+    headers.set("Content-Disposition", `attachment; filename="${filename}"`);
+    headers.set("Cache-Control", "no-store");
+    headers.set("X-Content-Type-Options", "nosniff");
+    headers.set("Referrer-Policy", "no-referrer");
+    headers.set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'");
+
+    return new Response(body, {
+      status: 200,
+      headers,
     });
-  }
-
-  let body;
-  try {
-    body = await upstreamResponse.arrayBuffer();
   } catch {
-    return new Response("Failed to read feed.", { status: 502 });
+    return new Response("Unexpected server error.", { status: 500 });
   }
-
-  const headers = new Headers();
-  const defaultContentType = extension === "json" ? "application/json; charset=utf-8" : "text/plain; charset=utf-8";
-  const upstreamContentType = upstreamResponse.headers.get("content-type");
-  const hasContentType = safeSetHeader(headers, "Content-Type", upstreamContentType);
-  if (!hasContentType) {
-    headers.set("Content-Type", defaultContentType);
-  }
-  headers.set("Content-Disposition", `attachment; filename="${filename}"`);
-  headers.set("Cache-Control", "no-store");
-  headers.set("X-Content-Type-Options", "nosniff");
-  headers.set("Referrer-Policy", "no-referrer");
-  headers.set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'");
-
-  return new Response(body, {
-    status: 200,
-    headers,
-  });
 }
