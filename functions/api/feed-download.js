@@ -31,6 +31,29 @@ const normalizeFilename = (value, extension) => {
   return `${base}.${extension}`;
 };
 
+const toSafeHttpStatus = (status, fallback = 502) => {
+  return Number.isInteger(status) && status >= 200 && status <= 599 ? status : fallback;
+};
+
+const safeSetHeader = (headers, name, value) => {
+  if (!value) {
+    return false;
+  }
+
+  try {
+    headers.set(name, value);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const buildDirectRedirect = (feedUrl) => {
+  const response = Response.redirect(feedUrl.toString(), 302);
+  response.headers.set("Cache-Control", "no-store");
+  return response;
+};
+
 const isAllowedQuery = (url) => {
   if ([...url.searchParams.keys()].length === 0) {
     return true;
@@ -86,34 +109,51 @@ export async function onRequestGet(context) {
     upstreamResponse = await fetch(feedUrl.toString(), {
       method: "GET",
       redirect: "error",
+      headers: {
+        "accept-encoding": "identity",
+      },
       signal: controller.signal,
     });
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       return new Response("Feed request timed out.", { status: 504 });
     }
-    return new Response("Failed to fetch feed.", { status: 502 });
+    return buildDirectRedirect(feedUrl);
   } finally {
     clearTimeout(timeoutId);
   }
 
   if (!upstreamResponse.ok) {
-    return new Response("Feed is unavailable.", { status: upstreamResponse.status });
+    if (upstreamResponse.status >= 500) {
+      return buildDirectRedirect(feedUrl);
+    }
+
+    return new Response("Feed is unavailable.", {
+      status: toSafeHttpStatus(upstreamResponse.status, 502),
+    });
   }
 
-  const contentType =
-    upstreamResponse.headers.get("content-type") ||
-    (extension === "json" ? "application/json; charset=utf-8" : "text/plain; charset=utf-8");
+  let body;
+  try {
+    body = await upstreamResponse.arrayBuffer();
+  } catch {
+    return new Response("Failed to read feed.", { status: 502 });
+  }
 
   const headers = new Headers();
-  headers.set("Content-Type", contentType);
+  const defaultContentType = extension === "json" ? "application/json; charset=utf-8" : "text/plain; charset=utf-8";
+  const upstreamContentType = upstreamResponse.headers.get("content-type");
+  const hasContentType = safeSetHeader(headers, "Content-Type", upstreamContentType);
+  if (!hasContentType) {
+    headers.set("Content-Type", defaultContentType);
+  }
   headers.set("Content-Disposition", `attachment; filename="${filename}"`);
   headers.set("Cache-Control", "no-store");
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("Referrer-Policy", "no-referrer");
   headers.set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'");
 
-  return new Response(upstreamResponse.body, {
+  return new Response(body, {
     status: 200,
     headers,
   });
