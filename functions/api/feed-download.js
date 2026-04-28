@@ -48,16 +48,6 @@ const safeSetHeader = (headers, name, value) => {
   }
 };
 
-const buildDirectRedirect = (feedUrl) => {
-  return new Response(null, {
-    status: 302,
-    headers: {
-      Location: feedUrl.toString(),
-      "Cache-Control": "no-store",
-    },
-  });
-};
-
 const isAllowedQuery = (url) => {
   if ([...url.searchParams.keys()].length === 0) {
     return true;
@@ -123,16 +113,12 @@ export async function onRequestGet(context) {
       if (error instanceof Error && error.name === "AbortError") {
         return new Response("Feed request timed out.", { status: 504 });
       }
-      return buildDirectRedirect(feedUrl);
+      return new Response("Failed to fetch feed upstream.", { status: 502 });
     } finally {
       clearTimeout(timeoutId);
     }
 
     if (!upstreamResponse.ok) {
-      if (upstreamResponse.status >= 500) {
-        return buildDirectRedirect(feedUrl);
-      }
-
       return new Response("Feed is unavailable.", {
         status: toSafeHttpStatus(upstreamResponse.status, 502),
       });
