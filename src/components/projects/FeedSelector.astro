@@ -296,36 +296,7 @@ const torFeeds = [
     return `/api/feed-download?${params.toString()}`;
   };
 
-  const parseFilenameFromContentDisposition = (value, fallback) => {
-    if (!value) {
-      return fallback;
-    }
-
-    const utf8Match = value.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
-    if (utf8Match?.[1]) {
-      try {
-        return decodeURIComponent(utf8Match[1].trim());
-      } catch {
-        return fallback;
-      }
-    }
-
-    const basicMatch = value.match(/filename\s*=\s*"?([^";]+)"?/i);
-    return basicMatch?.[1]?.trim() || fallback;
-  };
-
-  const triggerBlobDownload = (blob, filename) => {
-    const objectUrl = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = objectUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-  };
-
-  const triggerIframeDownload = (proxyUrl) => {
+  const triggerProxyDownload = (proxyUrl) => {
     const frame = document.createElement("iframe");
     frame.style.display = "none";
     frame.setAttribute("aria-hidden", "true");
@@ -336,45 +307,7 @@ const torFeeds = [
     }, 60000);
   };
 
-  const withDisabledButton = async (button, action) => {
-    if (button) {
-      button.disabled = true;
-    }
-
-    try {
-      await action();
-    } finally {
-      if (button) {
-        button.disabled = false;
-      }
-    }
-  };
-
-  const fetchDownloadData = async (proxyUrl) => {
-    let response;
-    try {
-      response = await fetch(proxyUrl, {
-        method: "GET",
-        credentials: "same-origin",
-      });
-    } catch {
-      return null;
-    }
-
-    if (!response.ok) {
-      return null;
-    }
-
-    try {
-      const blob = await response.blob();
-      const contentDisposition = response.headers.get("content-disposition");
-      return { blob, contentDisposition };
-    } catch {
-      return null;
-    }
-  };
-
-  const downloadFeed = async (feedSelect, formatSelect, downloadButton) => {
+  const downloadFeed = (feedSelect, formatSelect, downloadButton) => {
     const selectedOption = feedSelect?.selectedOptions?.[0];
     const baseUrl = feedSelect?.value ?? "";
     const format = formatSelect?.value === "json" ? "json" : "txt";
@@ -387,18 +320,13 @@ const torFeeds = [
 
     const requestedFilename = `${filenameBase}.${format}`;
     const proxyUrl = getProxyDownloadUrl(finalFeedUrl, requestedFilename);
-
-    await withDisabledButton(downloadButton, async () => {
-      const downloadData = await fetchDownloadData(proxyUrl);
-      if (!downloadData) {
-        triggerIframeDownload(proxyUrl);
-        return;
-      }
-
-      const { blob, contentDisposition } = downloadData;
-      const resolvedFilename = parseFilenameFromContentDisposition(contentDisposition, requestedFilename);
-      triggerBlobDownload(blob, resolvedFilename);
-    });
+    if (downloadButton) {
+      downloadButton.disabled = true;
+      setTimeout(() => {
+        downloadButton.disabled = false;
+      }, 900);
+    }
+    triggerProxyDownload(proxyUrl);
   };
 
   const setupFormatToggle = (txtButton, jsonButton, hiddenInput) => {
