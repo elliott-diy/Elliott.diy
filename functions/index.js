@@ -19,6 +19,8 @@ Projects  https://elliott.diy/projects
 GitHub    https://github.com/elliott-diy
 RSS       https://elliott.diy/rss.xml
 
+maybe use a real browser next time instead of curl (:
+
 Try:
   curl https://elliott.diy/robots.txt
   curl https://elliott.diy/.well-known/security.txt
