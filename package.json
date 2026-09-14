@@ -1,5 +1,5 @@
 {
-  "name": "void-astro",
+  "name": "elliott-diy",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
@@ -10,24 +10,21 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.8",
-    "@astrojs/mdx": "^5.0.3",
-    "@astrojs/rss": "^4.0.18",
-    "@astrojs/sitemap": "^3.7.2",
-    "@astropub/icons": "^0.2.0",
+    "@astrojs/markdown-satteri": "^0.4.1",
+    "@astrojs/mdx": "^8.0.1",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.4",
     "@tailwindcss/vite": "^4.2.2",
-    "astro": "^6.1.7",
+    "astro": "^7.3.2",
     "astro-iconify": "^1.2.0",
     "astro-navbar": "^2.3.2",
     "astro-robots-txt": "^1.0.0",
-    "clsx": "^2.1.1",
-    "mdast-util-to-string": "^4.0.0",
+    "github-slugger": "^2.0.0",
     "reading-time": "^1.5.0",
-    "tailwind-merge": "^2.3.0",
-    "tailwindcss": "^4.2.2",
-    "typescript": "^5.4.5"
+    "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
-    "astro-robots-txt": "^1.0.0"
+    "@astrojs/check": "^0.9.10",
+    "typescript": "^5.9.3"
   }
 }

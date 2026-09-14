@@ -5,21 +5,19 @@ type Props = HTMLAttributes<'a'>;
 
 const { href, class: className, ...props } = Astro.props;
 
-const { pathname } = Astro.url;
-const subpath = pathname.match(/[^\/]+/g);
-const isActive = href === pathname || href === '/' + subpath?.[0];
+const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
+const isActive = href === pathname || (href !== '/' && pathname.startsWith(`${href}/`));
 ---
 
-<a href={href} class:list={[className, { active: isActive }]} {...props}>
+<a
+	href={href}
+	class:list={[
+		className,
+		'underline-offset-4 transition-colors hover:text-neutral-900 dark:hover:text-white',
+		isActive && 'font-semibold text-neutral-900 underline decoration-accent decoration-2 dark:text-white',
+	]}
+	aria-current={isActive ? 'page' : undefined}
+	{...props}
+>
 	<slot />
 </a>
-<style>
-	a {
-		display: inline-block;
-		text-decoration: none;
-	}
-	a.active {
-		font-weight: bolder;
-		text-decoration: underline;
-	}
-</style>

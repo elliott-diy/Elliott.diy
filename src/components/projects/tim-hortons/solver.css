@@ -1,0 +1,79 @@
+.tims-solver {
+    --tims-red: #c80f2e;
+    --tims-brown: #412422;
+    --tims-cream: #eadec8;
+    display: block;
+    position: relative;
+    container-type: inline-size;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 480px;
+    margin: 1.5rem auto;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--tims-cream);
+    color: var(--tims-brown);
+    font: 400 16px/1.4 Arial, Helvetica, sans-serif;
+    text-align: left;
+    color-scheme: light;
+}
+.tims-solver *, .tims-solver *::before, .tims-solver *::after { box-sizing: border-box; }
+.tims-solver [hidden] { display: none !important; }
+.tims-solver p { margin: 0; }
+.tims-solver button, .tims-solver input, .tims-solver select { font: inherit; margin: 0; box-shadow: none; text-transform: none; }
+.tims-solver button { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: background-color 150ms, border-color 150ms, color 150ms; }
+.tims-solver button:disabled { opacity: .3; cursor: default; }
+.tims-solver:focus-visible { outline: 3px solid #b78a57; outline-offset: 4px; }
+.tims-solver :focus-visible { outline: 3px solid #fffaf3; outline-offset: 3px; }
+.tims-solver .tims-board-panel { position: relative; }
+.tims-solver .tims-navigation { position: absolute; inset: 0 14px auto; display: flex; align-items: flex-start; justify-content: space-between; z-index: 1; }
+.tims-solver .tims-navigation button { display: grid; place-items: center; margin-top: 7px; padding: 0; border: 1px solid #41242224; border-radius: 8px; background: #ffffff28; color: var(--tims-brown); width: 40px; height: 40px; }
+.tims-solver .tims-navigation button:hover:not(:disabled) { background: #fff6e5; border-color: #41242255; }
+.tims-solver .tims-navigation button:active:not(:disabled) { background: #d9c9ae; }
+.tims-solver .tims-navigation button:focus-visible { outline-color: var(--tims-brown); }
+.tims-solver .tims-level { display: flex; align-items: center; justify-content: center; min-width: 168px; height: 44px; padding: 0 18px; gap: .3em; border-radius: 0 0 11px 11px; background: var(--tims-red); color: #fff; font-size: 21px; font-weight: 800; line-height: 1; white-space: nowrap; }
+.tims-solver .tims-board-space { display: flex; align-items: center; justify-content: center; height: 394px; height: max(300px, 82cqi); padding: 72px 10% 28px; }
+.tims-solver [data-board] { display: block; flex: 0 1 auto; width: var(--board-width); height: var(--board-height); max-width: 100%; max-height: 100%; overflow: visible; }
+.tims-solver [data-board] rect { fill: #492923; transition: fill 160ms; }
+.tims-solver [data-board] text { fill: #fff; font: 700 24px Arial, Helvetica, sans-serif; user-select: none; }
+.tims-solver [data-board] .is-selected rect { fill: #278269; }
+.tims-solver .tims-answer-panel { position: relative; padding: 24px; background: var(--tims-red); color: #fff; box-shadow: 0 -4px 8px #48372b26; }
+.tims-solver .tims-search { display: flex; align-items: stretch; gap: 10px; margin: 0; }
+.tims-solver input { min-width: 0; width: 100%; height: 46px; border: 1px solid transparent; border-radius: 7px; padding: 0 13px; background: #fffaf3; color: var(--tims-brown); font-size: 16px; }
+.tims-solver input::placeholder { color: #8d7971; }
+.tims-solver input[aria-invalid='true'] { border-color: #fff; box-shadow: inset 0 0 0 1px var(--tims-red); }
+.tims-solver .tims-solve { flex-shrink: 0; border: 1px solid var(--tims-brown); border-radius: 7px; padding: 0 23px; background: var(--tims-brown); color: #fff; font-size: 16px; font-weight: 700; }
+.tims-solver .tims-solve:hover { background: #2f1918; }
+.tims-solver .tims-help { margin: 9px 0 22px; color: #ffe0df; font-size: 13px; line-height: 1.5; }
+.tims-solver .tims-answer-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid #ffffff38; padding-top: 17px; color: #ffe0df; font-size: 13px; }
+.tims-solver [data-copy] { display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 110px; min-height: 32px; border: 0; padding: 4px 0 4px 8px; background: transparent; color: #ffe0df; font-size: 13px; }
+.tims-solver [data-copy]:hover { color: #fff; }
+.tims-solver .tims-words { display: flex; flex-wrap: wrap; gap: 4px 19px; margin-top: 9px; }
+.tims-solver .tims-words button { min-height: 40px; max-width: 100%; overflow-wrap: anywhere; padding: 6px 0; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #fffaf3; font-size: 18px; font-weight: 700; letter-spacing: .35px; line-height: 1.4; user-select: text; }
+.tims-solver .tims-words button:hover { border-bottom-color: #ffffff6b; }
+.tims-solver .tims-words button[aria-pressed='true'] { border-bottom-color: #fff; }
+.tims-solver .tims-words button:focus-visible { outline-width: 2px; outline-offset: 2px; border-radius: 2px; }
+/* Routine announcements stay accessible without changing the applet's height. */
+.tims-solver .tims-status:not([data-visible]) { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.tims-solver .tims-status[data-visible] { margin: 12px 0 0; padding: 10px 12px; border-radius: 5px; background: #9f0924; font-size: 13px; line-height: 1.5; }
+.tims-solver .tims-matches { margin: 0 0 18px; }
+.tims-solver .tims-matches label { display: grid; gap: 6px; font-size: 13px; }
+.tims-solver select { width: 100%; min-width: 0; padding: 9px; border-radius: 5px; background: #fffaf3; color: var(--tims-brown); border: 0; }
+@container (max-width: 420px) {
+    .tims-solver .tims-answer-panel { padding: 20px; }
+    .tims-solver .tims-level { min-width: 35%; height: 40px; font-size: 19px; }
+    .tims-solver .tims-search { gap: 8px; }
+    .tims-solver .tims-solve { padding-inline: 18px; }
+    .tims-solver .tims-words { gap: 3px 17px; }
+    .tims-solver .tims-words button { font-size: 17px; }
+}
+@container (max-width: 300px) {
+    .tims-solver .tims-answer-panel { padding: 16px; }
+    .tims-solver .tims-level { font-size: 17px; height: 36px; padding-inline: 12px; }
+    .tims-solver .tims-navigation { inset-inline: 9px; }
+    .tims-solver .tims-navigation button { width: 36px; height: 36px; margin-top: 6px; }
+    .tims-solver .tims-search { gap: 7px; }
+    .tims-solver .tims-solve { padding-inline: 12px; }
+    .tims-solver .tims-words { gap: 3px 13px; }
+}
+@media (prefers-reduced-motion: reduce) { .tims-solver * { transition: none !important; } }

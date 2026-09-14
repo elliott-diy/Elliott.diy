@@ -1,10 +1,15 @@
 ---
-import Layout from '../layouts/404Page.astro';
+import Layout from '../layouts/ProjectPost.astro'
 ---
 
 <Layout
     title="404 - Page Not Found"
     description="The page you are looking for does not exist."
     heroImage="/otter_404.jpg"
+    heroImageAlt="A confused otter"
 >
+    <p>
+        Whatever you were looking for isn't here. Try the <a href="/">homepage</a>,
+        the <a href="/blog">blog</a>, or the <a href="/projects">projects</a> page.
+    </p>
 </Layout>

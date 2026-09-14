@@ -3,6 +3,7 @@ title: 'Weather2Geo'
 description: 'An OSINT tool for geolocating screenshots using weather widget data.'
 pubDate: 'May 29 2025'
 tags: ['osint', 'python', 'geolocation']
+repo: 'https://github.com/elliott-diy/Weather2Geo'
 ---
 
 This one started as a dumb idea I had after seeing way too many screenshots with the Windows weather widget still visible, usually from cybercriminals on Telegram who claim they have amazing opsec. They almost always include the current temperature, condition, and local time - which turns out to be just specific enough to geolocate if you check against live data.

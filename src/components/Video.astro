@@ -1,0 +1,40 @@
+---
+/**
+ * Embed a video in MDX. Available in every post/project without importing.
+ *
+ *   <Video src="https://youtu.be/dQw4w9WgXcQ" caption="Optional caption" />
+ *   <Video src="https://vimeo.com/76979871" />
+ *   <Video src="/videos/demo.mp4" poster="/videos/demo.jpg" autoplay loop />
+ *
+ *   import clip from './clip.mp4'
+ *   <Video src={clip} title="Local clip" />
+ */
+import { buildVideoNode, parseVideoSource, type VideoNode, type VideoOptions } from '../utils/video'
+
+interface Props extends VideoOptions {
+    src: string
+    /** Internal: renders a nested node. */
+    node?: VideoNode
+}
+
+const { src, node: nested, ...options } = Astro.props
+
+let node = nested
+if (!node) {
+    const source = parseVideoSource(src)
+    if (!source) {
+        throw new Error(`<Video>: couldn't work out how to embed "${src}". Use a YouTube/Vimeo URL or a video file (.mp4, .webm, .mov, .ogv).`)
+    }
+    node = buildVideoNode(source, options)
+}
+
+const Tag = node.tagName
+---
+
+<Tag {...node.properties}>
+    {
+        node.children.map((child) =>
+            child.type === 'text' ? child.value : <Astro.self src={src} node={child} />
+        )
+    }
+</Tag>

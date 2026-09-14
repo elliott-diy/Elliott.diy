@@ -1,33 +1,21 @@
 ---
-import { type CollectionEntry, getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
 import ProjectPost from '../../layouts/ProjectPost.astro'
+import Video from '../../components/Video.astro'
+import { getSortedPosts } from '../../utils/posts'
 
 export async function getStaticPaths() {
-    const posts = await getCollection('projects');
-    return posts.map((post) => ({
-        params: { slug: post.id },
-        props: post,
+    const projects = await getSortedPosts('projects');
+    return projects.map((project) => ({
+        params: { slug: project.id },
+        props: { project },
     }));
 }
-type Props = CollectionEntry<'projects'>;
 
-const post = Astro.props;
-const { Content } = await render(post);
+const { project } = Astro.props;
+const { Content } = await render(project);
 ---
 
-<ProjectPost {...post.data}>
-    <div class="content">
-        <Content />
-    </div>
+<ProjectPost title={project.data.title} description={project.data.description} repo={project.data.repo}>
+    <Content components={{ Video }} />
 </ProjectPost>
-
-
-<style>
-    :global(.content a) {
-        text-decoration: underline;
-    }
-    :global(.content a:hover) {
-        text-decoration: underline;
-        color: #6a5bcd
-    }
-</style>

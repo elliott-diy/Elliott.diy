@@ -1,0 +1,36 @@
+---
+import type { CollectionEntry } from 'astro:content'
+import { Icon } from 'astro-iconify'
+
+interface Props {
+    project: CollectionEntry<'projects'>
+}
+
+const { project } = Astro.props
+const { title, description, repo } = project.data
+---
+
+<li class="flex flex-col gap-1 border-b border-neutral-200 py-3 dark:border-neutral-700">
+    <div class="flex items-baseline justify-between gap-4">
+        <a class="font-bold break-words" href={`/projects/${project.id}`}>
+            {title}
+        </a>
+        {
+            repo && (
+                <a
+                    href={repo}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex shrink-0 items-center gap-1.5 text-xs text-gray-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+                >
+                    <Icon name="radix-icons:github-logo" class="h-3.5 w-3.5" aria-hidden="true" />
+                    Source
+                </a>
+            )
+        }
+    </div>
+    <!-- One line on desktop, two on mobile; the full text is on the project page -->
+    <p class="line-clamp-2 text-sm text-gray-500 sm:line-clamp-1 dark:text-neutral-400" title={description}>
+        {description}
+    </p>
+</li>

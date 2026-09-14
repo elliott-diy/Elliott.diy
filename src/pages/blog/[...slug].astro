@@ -1,37 +1,23 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
 import readingTime from 'reading-time';
 import BlogPost from '../../layouts/BlogPost.astro';
+import Video from '../../components/Video.astro';
+import { getSortedPosts } from '../../utils/posts';
 
 export async function getStaticPaths() {
-	const posts = await getCollection('blog');
+	const posts = await getSortedPosts();
 	return posts.map((post) => ({
 		params: { slug: post.id },
-		props: post,
+		props: { post },
 	}));
 }
 
-const post = Astro.props;
-const { Content } = await render(post);
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
 const readTimeText = `${Math.max(1, Math.round(readingTime(post.body ?? '').minutes))} min read`;
 ---
 
-<BlogPost
-	{...post.data}
-	readTimeText={readTimeText}
->
-	<div class="content">
-		<Content />
-	</div>
+<BlogPost {...post.data} readTimeText={readTimeText} headings={headings}>
+	<Content components={{ Video }} />
 </BlogPost>
-
-
-<style>
-	:global(.content a) {
-		text-decoration: underline;
-	}
-	:global(.content a:hover) {
-		text-decoration: underline;
-		color: #6a5bcd
-	}
-</style>

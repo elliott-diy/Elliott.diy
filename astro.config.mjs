@@ -2,8 +2,9 @@ import { defineConfig } from 'astro/config'
 import mdx from '@astrojs/mdx'
 import sitemap from '@astrojs/sitemap'
 import robotsTxt from 'astro-robots-txt'
-
 import tailwind from '@tailwindcss/vite'
+import { satteri } from '@astrojs/markdown-satteri'
+import { hastPlugins, mdastPlugins } from './src/plugins/markdown.ts'
 
 // https://astro.build/config
 export default defineConfig({
@@ -13,15 +14,15 @@ export default defineConfig({
         plugins: [tailwind()],
     },
     markdown: {
+        // Video embeds + heading permalinks for .md and .mdx (see src/plugins/markdown.ts)
+        processor: satteri({ mdastPlugins, hastPlugins }),
         shikiConfig: {
-          // Choose from Shiki's built-in themes (or add your own)
-          // https://shiki.style/themes
-          // Alternatively, provide multiple themes
-          // See note below for using dual light/dark themes
-          themes: {
-            light: 'poimandres',
-            dark: 'catppuccin-latte',
-          },
+            // https://shiki.style/themes — dark colours are applied via CSS in global.css
+            themes: {
+                light: 'catppuccin-latte',
+                dark: 'poimandres',
+            },
+            wrap: false,
         },
-      },
+    },
 })

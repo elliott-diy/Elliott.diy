@@ -1,11 +1,9 @@
 ---
 import Layout from '../layouts/ProjectPost.astro';
+import { SITE_DESCRIPTION } from '../consts';
 ---
 
-<Layout
-	title="About Me"
-	description="A personal site for experiments in cybersecurity, reverse engineering, and whatever breaks along the way."
->
+<Layout title="About Me" description={SITE_DESCRIPTION}>
 	<p>
 		Hey, I'm Elliott, a cybersecurity student based in Canada. I enjoy reverse engineering, malware analysis, and breaking things that probably shouldn't be online.
 	</p>
@@ -15,14 +13,14 @@ import Layout from '../layouts/ProjectPost.astro';
 	</p>
 
 	<p>
-		These days, I spend most of my time doing schoolwork, but whenever I get a break, I'm usually poking around apps, hunting malware on GitHub, making CTF challenges, or just building tools for fun.	</p>
+		These days, I spend most of my time doing schoolwork, but whenever I get a break, I'm usually poking around apps, hunting malware on GitHub, making CTF challenges, or just building tools for fun.
+	</p>
 
 	<p>
 		Outside of security, I volunteer with organizations supporting marine mammals, mostly with seals and otters and have built a few tools to support that too.
 	</p>
+
 	<p>
 		If you're building something cool and need help breaking or securing it, feel free to contact me! My contact info's in the footer.
 	</p>
-
-
 </Layout>

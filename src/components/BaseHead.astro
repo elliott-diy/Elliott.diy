@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import type { ImageMetadata } from 'astro';
-
+import { SITE_TITLE } from '../consts';
 
 interface Props {
 	title: string;
@@ -27,6 +27,8 @@ const {
 	tags = [],
 } = Astro.props;
 
+// "Blog | Elliott.diy" in the tab, plain title for social cards.
+const documentTitle = title === SITE_TITLE ? title : `${title} | ${SITE_TITLE}`;
 const imagePath = typeof image === 'string' ? image : image.src;
 const imageURL = new URL(imagePath, Astro.site).toString();
 ---
@@ -35,24 +37,26 @@ const imageURL = new URL(imagePath, Astro.site).toString();
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2210 0 100 100%22><text y=%22.90em%22 font-size=%2290%22>🦭</text></svg>" />
+<link rel="preload" href="/fonts/reddit-mono-v5-latin_latin-ext-regular.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="sitemap" href="/sitemap-index.xml" />
 <meta name="generator" content={Astro.generator} />
-
-
+<meta name="theme-color" content="#262626" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 
 <!-- Canonical URL -->
 <link rel="canonical" href={canonicalURL} />
 
 <!-- Primary Meta Tags -->
-<title>{title}</title>
-<meta name="title" content={title} />
+<title>{documentTitle}</title>
+<meta name="title" content={documentTitle} />
 <meta name="description" content={description} />
 
-<!-- Atom Feed -->
-<link href="/rss.xml" type="application/rss+xml" rel="alternate" title="RSS feed" />
-
+<!-- RSS Feed -->
+<link href="/rss.xml" type="application/rss+xml" rel="alternate" title={SITE_TITLE} />
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content={ogType} />
+<meta property="og:site_name" content={SITE_TITLE} />
 <meta property="og:url" content={canonicalURL} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
@@ -76,30 +80,18 @@ const imageURL = new URL(imagePath, Astro.site).toString();
 		<meta property="article:modified_time" content={modifiedTime.toISOString()} />
 	)
 }
-{
-	ogType === 'article' &&
-		tags.map((tag) => (
-			<meta property="article:tag" content={tag} />
-		))
-}
+{ogType === 'article' && tags.map((tag) => <meta property="article:tag" content={tag} />)}
 
+<!-- Apply the theme before first paint. Only an explicit toggle is persisted,
+     so visitors who never touch it keep following their OS setting. -->
 <script is:inline>
-    const theme = (() => {
-        if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
-            return localStorage.getItem("theme");
-        }
-        if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            return "dark";
-        }
-        return "light";
-    })();
-
-    if (theme === "light") {
-        document.documentElement.classList.remove("dark");
-    } else {
-        document.documentElement.classList.add("dark");
-    }
-    window.localStorage.setItem("theme", theme);
-//
-
+	(() => {
+		let stored = null;
+		try {
+			stored = localStorage.getItem('theme');
+		} catch {}
+		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+		const isDark = stored ? stored === 'dark' : prefersDark;
+		document.documentElement.classList.toggle('dark', isDark);
+	})();
 </script>

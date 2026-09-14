@@ -1,0 +1,56 @@
+---
+import challenges from './tim-hortons/challenges.json'
+import { getBoard } from './tim-hortons/solver'
+import './tim-hortons/solver.css'
+
+interface Props {
+    initialLevel?: number
+}
+
+const { initialLevel = 1 } = Astro.props
+const challenge = challenges.find(({ id }) => id === initialLevel) ?? challenges[0]
+const board = getBoard(challenge)
+---
+
+<tims-word-solver class="tims-solver" data-level={challenge.id} tabindex="0" role="region" aria-label="Tim Hortons word solver">
+    <div class="tims-board-panel">
+        <div class="tims-navigation">
+            <button type="button" data-previous aria-label="Previous level" title="Previous level · Left arrow" disabled={challenge.id === challenges[0].id}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg></button>
+            <span class="tims-level">Level <span data-level-label>{challenge.id}</span></span>
+            <button type="button" data-next aria-label="Next level" title="Next level · Right arrow" disabled={challenge.id === challenges.at(-1)?.id}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 6 6 6-6 6" /></svg></button>
+        </div>
+        <div class="tims-board-space">
+            <svg data-board viewBox={`0 0 ${board.width * 40} ${board.height * 40}`} style={`--board-width: ${board.width * 42}px; --board-height: ${board.height * 42}px`} role="img" aria-label={`Solved crossword for level ${challenge.id}`}>
+                {board.cells.map(cell => (
+                    <g data-words={cell.words.join(' ')}>
+                        <rect x={cell.x * 40 + 2} y={cell.y * 40 + 2} width="36" height="36" rx="7" />
+                        <text x={cell.x * 40 + 20} y={cell.y * 40 + 21} dominant-baseline="central" text-anchor="middle">{cell.letter}</text>
+                    </g>
+                ))}
+            </svg>
+        </div>
+    </div>
+    <div class="tims-answer-panel">
+        <form class="tims-search">
+            <input aria-label="Level number or puzzle letters" placeholder="Level or letters" value={challenge.id} autocomplete="off" spellcheck="false" maxlength="40" />
+            <button type="submit" class="tims-solve">Solve</button>
+        </form>
+        <p class="tims-help">Enter a level number or the puzzle’s letters.</p>
+        <div class="tims-matches" hidden>
+            <label>Matching levels <select aria-label="Matching levels"></select></label>
+        </div>
+        <div class="tims-answer-heading">
+            <span data-count>{challenge.words.length} words</span>
+            <button type="button" data-copy><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path data-copy-icon d="M9 9h12v12H9zM15 5V3H3v12h2" /></svg><span data-copy-label>Copy answers</span></button>
+        </div>
+        <div class="tims-words" aria-label="Answers">
+            {challenge.words.map(word => <button type="button" data-word={word} aria-pressed="false">{word}</button>)}
+        </div>
+        <p class="tims-status" role="status" aria-live="polite" aria-atomic="true"></p>
+        <noscript><p>Enable JavaScript to search other levels. These are the answers for level {challenge.id}.</p></noscript>
+    </div>
+</tims-word-solver>
+
+<script>
+    import './tim-hortons/element'
+</script>

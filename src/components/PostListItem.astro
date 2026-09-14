@@ -1,0 +1,53 @@
+---
+import type { CollectionEntry } from 'astro:content'
+import { Image } from 'astro:assets'
+import FormattedDate from './FormattedDate.astro'
+import TagLink from './TagLink.astro'
+
+interface Props {
+    post: CollectionEntry<'blog'>
+    showDescription?: boolean
+}
+
+const { post, showDescription = false } = Astro.props
+const { title, description, pubDate, tags, heroImage, heroImageAlt } = post.data
+const href = `/blog/${post.id}`
+---
+
+<li class="flex items-start gap-4 border-b border-neutral-200 pb-4 dark:border-neutral-700">
+    <div class="flex min-w-0 flex-1 flex-col gap-3">
+        <FormattedDate date={pubDate} />
+        <a class="text-lg font-bold break-words" href={href}>
+            {title}
+        </a>
+        {
+            showDescription && (
+                <p class="text-base break-words text-gray-500 dark:text-neutral-400">
+                    {description}
+                </p>
+            )
+        }
+        {
+            tags.length > 0 && (
+                <div class="flex flex-wrap gap-2">
+                    {tags.map((tag) => (
+                        <TagLink tag={tag} />
+                    ))}
+                </div>
+            )
+        }
+    </div>
+    {
+        heroImage && (
+            <a href={href} class="hidden shrink-0 sm:block" tabindex="-1" aria-hidden="true">
+                <Image
+                    src={heroImage}
+                    alt={heroImageAlt ?? `Cover image for ${title}`}
+                    width={320}
+                    height={192}
+                    class="h-24 w-40 border border-neutral-200 object-cover dark:border-neutral-700"
+                />
+            </a>
+        )
+    }
+</li>
