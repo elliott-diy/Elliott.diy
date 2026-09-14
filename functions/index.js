@@ -1,9 +1,9 @@
 export const onRequest = async (context) => {
     const ua = context.request.headers.get("user-agent") ?? ""
 
-    const isCli = /\b(curl|wget|httpie|xh)\b/i.test(ua)
+    const isCurl = /^curl\/[\d.]+/i.test(ua)
 
-    if (!isCli) {
+    if (!isCurl) {
         return context.next()
     }
 
@@ -17,7 +17,9 @@ and other questionable uses of computers.
 Blog      https://elliott.diy/blog
 Projects  https://elliott.diy/projects
 GitHub    https://github.com/elliott-diy
+Source    https://github.com/elliott-diy/Elliott.diy
 RSS       https://elliott.diy/rss.xml
+Email     hey@elliott.diy
 
 maybe use a real browser next time instead of curl (:
 
@@ -30,7 +32,8 @@ Try:
     return new Response(body, {
         headers: {
             "content-type": "text/plain; charset=utf-8",
-            "cache-control": "public, max-age=300",
+            "cache-control": "no-store",
+            "x-content-type-options": "nosniff",
         },
     })
 }
