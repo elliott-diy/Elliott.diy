@@ -1,4 +1,4 @@
-export const onRequest: PagesFunction = async (context) => {
+export const onRequest = async (context) => {
     const ua = context.request.headers.get("user-agent") ?? ""
 
     const isCli = /\b(curl|wget|httpie|xh)\b/i.test(ua)
