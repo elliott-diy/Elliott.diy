@@ -1,0 +1,24 @@
+---
+title: "Timbit Solver"
+description: "A solver for the Tim Hortons Word Challenge. Look up answers by level number or puzzle letters, with crossword layouts."
+pubDate: "October 2, 2026"
+tags: ["word-games", "tool"]
+---
+
+import TimHortonsSolver from '../../components/projects/TimHortonsSolver.astro'
+
+This is a small solver for the Tim Hortons Word Challenge. I made it after my friends started getting free coffee before me and I decided that pulling apart the app sounded more fun than getting better at word games.
+
+Enter a level number or the puzzle's letters below. It'll show you the answers and where they go on the board.
+
+<TimHortonsSolver />
+
+If you're curious how I got the answers in the first place, I wrote about the whole thing in [Timbit Tomfoolery](/blog/timbit/).
+
+## Using the solver
+
+You can search by level, like `49`, or by letters, like `BOWED`. The order doesn't matter, but you do need all the letters, including any repeats. Some levels use the same letters, so if a few match, you'll get a dropdown to pick the right one.
+
+Click a word to highlight it on the board, or click it again to clear it. The arrows move between levels, and the copy button copies the answer list. That's pretty much it.
+
+<p class="article-disclaimer">This is an independent project, not affiliated with Tim Hortons or Uken. All trademarks and game assets belong to their respective owners.</p>

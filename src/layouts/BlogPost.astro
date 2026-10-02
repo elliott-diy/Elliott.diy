@@ -132,29 +132,47 @@ const shareLinks = [
     import "../scripts/content";
   </script>
 
-  <!-- Giscus is injected with the right theme up front instead of flashing light then switching. -->
+  <!-- Load comments near the viewport, using the theme selected at that moment. -->
   <script is:inline>
     (() => {
-      const giscus = document.createElement("script");
-      const attrs = {
-        src: "https://giscus.app/client.js",
-        "data-repo": "elliott-diy/elliott-diy",
-        "data-repo-id": "R_kgDONWVN1g",
-        "data-category": "Announcements",
-        "data-category-id": "DIC_kwDONWVN1s4CqAS0",
-        "data-mapping": "pathname",
-        "data-strict": "0",
-        "data-reactions-enabled": "1",
-        "data-emit-metadata": "0",
-        "data-input-position": "bottom",
-        "data-theme": document.documentElement.classList.contains("dark") ? "transparent_dark" : "light",
-        "data-lang": "en",
-        "data-loading": "lazy",
-        crossorigin: "anonymous",
+      const comments = document.querySelector("section.giscus");
+      if (!comments) return;
+
+      const loadComments = () => {
+        if (comments.querySelector("script")) return;
+        const giscus = document.createElement("script");
+        const attrs = {
+          src: "https://giscus.app/client.js",
+          "data-repo": "elliott-diy/elliott-diy",
+          "data-repo-id": "R_kgDONWVN1g",
+          "data-category": "Announcements",
+          "data-category-id": "DIC_kwDONWVN1s4CqAS0",
+          "data-mapping": "pathname",
+          "data-strict": "0",
+          "data-reactions-enabled": "1",
+          "data-emit-metadata": "0",
+          "data-input-position": "bottom",
+          "data-theme": document.documentElement.classList.contains("dark") ? "transparent_dark" : "light",
+          "data-lang": "en",
+          "data-loading": "lazy",
+          crossorigin: "anonymous",
+        };
+        Object.entries(attrs).forEach(([key, value]) => giscus.setAttribute(key, value));
+        giscus.async = true;
+        comments.appendChild(giscus);
       };
-      Object.entries(attrs).forEach(([key, value]) => giscus.setAttribute(key, value));
-      giscus.async = true;
-      document.querySelector("section.giscus")?.appendChild(giscus);
+
+      if (!("IntersectionObserver" in window)) {
+        loadComments();
+        return;
+      }
+
+      const observer = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer.disconnect();
+        loadComments();
+      }, { rootMargin: "300px" });
+      observer.observe(comments);
     })();
   </script>
 </BaseLayout>

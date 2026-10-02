@@ -1,5 +1,5 @@
 import dataUrl from './challenges.json?url'
-import { findChallenges, getBoard, type Challenge } from './solver'
+import { findChallenges, getBoard, getWords, type Challenge } from './solver'
 
 // One download shared by every embed; a failed request can be retried.
 let dataRequest: Promise<Challenge[]> | undefined
@@ -68,6 +68,7 @@ class TimsWordSolver extends HTMLElement {
         }
 
         const render = (challenge: Challenge, all: Challenge[]) => {
+            const answers = getWords(challenge)
             resetCopy()
             input.removeAttribute('aria-invalid')
             level = challenge.id
@@ -77,7 +78,7 @@ class TimsWordSolver extends HTMLElement {
             const index = all.indexOf(challenge)
             previous.disabled = index === 0
             next.disabled = index === all.length - 1
-            this.querySelector('[data-count]')!.textContent = `${challenge.words.length} words`
+            this.querySelector('[data-count]')!.textContent = `${answers.length} words`
             const board = getBoard(challenge)
             svg.setAttribute('viewBox', `0 0 ${board.width * 40} ${board.height * 40}`)
             svg.setAttribute('aria-label', `Solved crossword for level ${level}`)
@@ -100,7 +101,7 @@ class TimsWordSolver extends HTMLElement {
                 group.append(rect, text)
                 return group
             }))
-            words.replaceChildren(...challenge.words.map(word => {
+            words.replaceChildren(...answers.map(word => {
                 const button = document.createElement('button')
                 button.type = 'button'
                 button.dataset.word = word
@@ -109,7 +110,7 @@ class TimsWordSolver extends HTMLElement {
                 return button
             }))
             selectedWord = undefined
-            announce(`Level ${level}. ${challenge.words.length} answers found.`)
+            announce(`Level ${level}. ${answers.length} answers found.`)
         }
 
         const withData = async (action: (all: Challenge[]) => void) => {
