@@ -1,6 +1,6 @@
 ---
 import challenges from './tim-hortons/challenges.json'
-import { getBoard } from './tim-hortons/solver'
+import { getBoard, getWords } from './tim-hortons/solver'
 import './tim-hortons/solver.css'
 
 interface Props {
@@ -10,6 +10,7 @@ interface Props {
 const { initialLevel = 1 } = Astro.props
 const challenge = challenges.find(({ id }) => id === initialLevel) ?? challenges[0]
 const board = getBoard(challenge)
+const words = getWords(challenge)
 ---
 
 <tims-word-solver class="tims-solver" data-level={challenge.id} tabindex="0" role="region" aria-label="Tim Hortons word solver">
@@ -40,11 +41,11 @@ const board = getBoard(challenge)
             <label>Matching levels <select aria-label="Matching levels"></select></label>
         </div>
         <div class="tims-answer-heading">
-            <span data-count>{challenge.words.length} words</span>
+            <span data-count>{words.length} words</span>
             <button type="button" data-copy><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path data-copy-icon d="M9 9h12v12H9zM15 5V3H3v12h2" /></svg><span data-copy-label>Copy answers</span></button>
         </div>
         <div class="tims-words" aria-label="Answers">
-            {challenge.words.map(word => <button type="button" data-word={word} aria-pressed="false">{word}</button>)}
+            {words.map(word => <button type="button" data-word={word} aria-pressed="false">{word}</button>)}
         </div>
         <p class="tims-status" role="status" aria-live="polite" aria-atomic="true"></p>
         <noscript><p>Enable JavaScript to search other levels. These are the answers for level {challenge.id}.</p></noscript>

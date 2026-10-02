@@ -1,8 +1,11 @@
 export interface Challenge {
     id: number
     letters: string
-    words: string[]
     placements: { x: number; y: number; direction: string; word: string }[]
+}
+
+export function getWords(challenge: Challenge): string[] {
+    return [...new Set(challenge.placements.map(({ word }) => word))]
 }
 
 export function letterKey(value: string): string {
