@@ -59,7 +59,7 @@ The biggest concern here is `minecraftTaskLaunchInstance`, as it allows attacker
 
 ## Proof of Concept
 
-**Video demo:** https://cdn.elliott.diy/curseforge.mp4
+<Video src="https://cdn.elliott.diy/curseforge.mp4" controls></Video>
 
 **Live PoC:** https://research.elliott.diy/97bef577
 

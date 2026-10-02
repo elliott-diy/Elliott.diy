@@ -1,0 +1,136 @@
+---
+title: "Timbit Tomfoolery: Reverse Engineering the Tim's Word Challenge"
+description: 'Reverse engineering the Tim Hortons Word Challenge, extracting thousands of levels from a Hermes bundle, and turning them into a solver.'
+pubDate: 'October 1, 2026'
+tags: ['reverse-engineering', 'research', 'security']
+heroImage: './images/tims.jpg'
+heroImageAlt: 'Tim Hortons Word Challenge reverse engineering write-up cover image'
+---
+
+import TimHortonsSolver from '../../components/projects/TimHortonsSolver.astro'
+
+## How This Got Out of Hand
+
+I'm really bad at word games. I'm also very competitive, which became a problem when my friends started playing the Tim Hortons Word Challenge and getting free coffee before me. I could've spent some time actually getting better at the game, but that sounded pretty boring. So instead, I decided to reverse engineer it and write a solver.
+
+If you just want the solver and don't care about the reverse engineering part, you can [skip to it](#turning-it-into-a-solver).
+
+## Finding the Word Challenge Backend
+
+One of the first things I usually do when reverse engineering a mobile app is spin up Proxyman and see what the app is sending and receiving. Launching the app fresh and playing a single level of the Word Challenge immediately revealed the backend the game was talking to.
+
+Interestingly, none of these requests were going to the normal Tim Hortons API. Instead, the game was talking to a third-party game provider called Uken, using `backend.prd.word.th.uken.com` as its API. Once I had the host, I enabled Proxyman's SSL proxying and started digging into the traffic.
+
+I wasn't particularly interested in messing with the game's backend, but finding the hostname and a few recognizable strings turned out to be useful later. They gave me some very specific things to search for once I started digging through the Android app.
+
+## Pulling Apart the Android App
+
+My daily driver is an iPhone, but I personally find IPAs a pain to work with, so when an Android version of an app exists I usually grab that instead. I grabbed the Tim Hortons APK from APKPure and started pulling it apart with JADX and a few basic APK inspection tools.
+
+JADX itself wasn't especially useful for the Word Challenge logic. Most of what it exposed was the normal Android application structure, resources, configuration, and bundled native code. The more interesting part was sitting in `assets/index.android.bundle`, where the app's React Native JavaScript had been bundled by Metro and compiled to Hermes bytecode.
+
+The Word Challenge also wasn't just a couple of screens bolted directly into the rest of the Tim Hortons code. It appeared to be packaged as a fairly self-contained part of the larger app, even carrying its own `@tim-hortons-ventures/th-word-challenge-app` package name, along with its own Uken backend, game state, puzzle data, and assets. Unfortunately, because the JavaScript bundle had been compiled with Hermes, opening `index.android.bundle` didn't give me a nice pile of readable JavaScript to search through.
+
+## Hermes Made This Slightly More Annoying
+
+Because the bundle was compiled to Hermes bytecode, specifically Hermes v98, I couldn't just open `index.android.bundle` and start reading through the original JavaScript. Instead, I used [hermes-dec](https://github.com/P1sec/hermes-dec) to disassemble the bytecode into something I could actually start working with.
+
+This is also where the earlier Proxyman findings became useful. I already knew the Uken hostname and had a handful of recognizable strings from the network traffic, which gave me some very specific things to search for in the disassembled bundle. Rather than trying to painstakingly understand the entire app, I could find references to the Word Challenge and work backwards from the functions and modules using them.
+
+Searching for those strings led me back to the part of the bundle responsible for the Word Challenge, which gave me a much smaller area to focus on. I could have kept reconstructing the rest of the client from there, but while digging through the bundle I found that the levels themselves were already embedded directly in the app.
+
+## So, Where Are the Answers?
+
+Unfortunately, "embedded directly in the app" didn't mean a nice JSON file in the APK. Rather, the level definitions had been compiled into the Hermes bundle along with the rest of the JavaScript.
+
+Each level was stored as a tiny Metro module that reconstructed an object from Hermes' serialized object and array buffers. For example, level 49 compiled down to just a handful of instructions:
+
+```text
+Function 11700
+
+0000 NewObjectWithBufferLong r2, 2847, 986522
+000a NewArrayWithBufferLong r1, 4, 4, 986541
+0014 PutOwnBySlotIdx r2, r1, 4
+0018 LoadParam r1, 5
+001b PutByIdLoose r1, r2, 0, #134='exports'
+0021 LoadConstUndefined r0
+0023 Ret r0
+```
+
+The first instruction creates an object using shape 2847, which maps to the following fields:
+
+```text
+id
+length
+width
+letters
+word_placements
+```
+
+The values for that object were stored separately in Hermes' value buffer. Resolving offset `986522` gave:
+
+```text
+49
+4
+7
+BOWED
+undefined
+```
+
+The `word_placements` field starts out undefined because the next instruction creates it as a separate array. Resolving the array buffer at `986541` gave:
+
+```text
+2,1,H,BOWED
+2,1,V,BED
+4,0,V,OWED
+0,2,H,OWE
+```
+
+Putting all of these back together gives the original level object:
+
+```json
+{
+  "id": 49,
+  "length": 4,
+  "width": 7,
+  "letters": "BOWED",
+  "word_placements": [
+    "2,1,H,BOWED",
+    "2,1,V,BED",
+    "4,0,V,OWED",
+    "0,2,H,OWE"
+  ]
+}
+```
+
+Those placement strings were basically the solution to the puzzle written out as coordinates, direction, and the word itself. Now the only challenge left was to dump the other 3500ish levels from the bundle...
+
+## Extracting the Levels
+
+Doing one level manually was a good way to prove the concept, but that clearly wasn't feasible for thousands of levels. Luckily, every level followed essentially the same structure, with the `word_placements` array being reconstructed from Hermes' serialized buffers.
+
+That made the extraction mostly a matter of automating what I had just done by hand. I wrote a Python script around the hermes-dec output that walked the relevant Metro modules, identified their object and array buffer references, resolved the serialized Hermes values, and reconstructed each level into JSON.
+
+For each level I ended up with the level ID, dimensions, available letters, and the raw `word_placements`. Since `word_placements` already contained the actual answers, I now had everything I needed to turn the extracted data into a solver.
+
+## Turning It Into a Solver
+
+Once I had the raw level data, all that was left was the arts and crafts bit of turning it into an actual solver. The result is a small web app that lets you select a level and looks up the solution from the extracted data.
+
+The only catch is that the level data is frozen to the day I extracted it. So, if you're some mad lad who has already completed all 3500ish levels, the solver won't know about anything added after that.
+
+Anyway, if you want to give it a shot, the solver is below.
+
+<TimHortonsSolver />
+
+## That's About It
+
+This wasn't a particularly deep or complex reverse engineering project, but it was a fun little way to mess with Hermes and Metro and pick up some new skills.
+
+I'd done some iOS reverse engineering work over the summer for an employer, so I was actually kind of hoping the IPA would give me an excuse to use some of that again. Unfortunately, it turned out to be nearly identical to the Android version apart from a different bundle format and Hermes version.
+
+If you're planning on actually using this to cheat your way through all 3500ish levels, you're kind of insane. Clicking through that many puzzles manually would probably take longer than just getting good at word games.
+
+<small>
+    Not affiliated with Tim Hortons or Uken. This write-up is limited to client-side analysis of the app. All trademarks and game assets belong to their respective owners.
+</small>

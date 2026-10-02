@@ -386,3 +386,15 @@ html.dark .astro-code span {
         animation-duration: 0.01ms !important;
     }
 }
+
+.prose-content :where(.article-disclaimer) {
+    margin-top: 2.5rem;
+    margin-bottom: 0;
+    font-size: 0.6875rem;
+    line-height: 1.5;
+    color: #737373;
+}
+
+.dark .prose-content :where(.article-disclaimer) {
+    color: #737373;
+}
