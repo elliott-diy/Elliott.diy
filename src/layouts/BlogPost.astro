@@ -28,20 +28,6 @@ const {
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
 const ogImage = heroImage ?? "/otter.webp";
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  headline: title,
-  description,
-  datePublished: pubDate.toISOString(),
-  dateModified: (updatedDate ?? pubDate).toISOString(),
-  mainEntityOfPage: canonicalURL,
-  url: canonicalURL,
-  image: [new URL(typeof ogImage === "string" ? ogImage : ogImage.src, Astro.site).toString()],
-  keywords: tags,
-  author: { "@type": "Person", name: "Elliott", url: Astro.site?.toString() },
-};
-
 const shareLinks = [
   {
     label: "Hacker News",
@@ -66,8 +52,6 @@ const shareLinks = [
   modifiedTime={updatedDate ?? pubDate}
   tags={tags}
 >
-  <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-
   <article class="px-4">
     <div class="mb-6 flex justify-between text-xs font-medium tracking-wide text-gray-500 dark:text-neutral-400">
       <div class="flex flex-col gap-1">
